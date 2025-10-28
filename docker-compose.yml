@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   kyuubi:
-    image: apache/kyuubi:1.9.0-spark-3.5
+    image: apache/kyuubi:1.10.2-spark
     container_name: kyuubi-server
     ports:
       - "10009:10009"  # Kyuubi server port

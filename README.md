@@ -187,6 +187,16 @@ just clean               # Clean up everything
 just backup-config       # Backup configurations
 ```
 
+### Docker Image Management
+```bash
+just docker-build [tag]     # Build custom Kyuubi image
+just docker-publish [tag]   # Publish image to registry
+just docker-release <ver>   # Build and publish with versioning
+just docker-use-custom [tag] # Update compose to use custom image
+just docker-use-official    # Restore official image in compose
+just docker-info            # Show Docker image information
+```
+
 ## ⚙️ Configuration
 
 ### Environment Variables
@@ -272,6 +282,104 @@ The `.gitignore` file is configured to exclude:
 - [ ] Enable audit logging
 - [ ] Use secrets management (HashiCorp Vault, AWS Secrets Manager)
 - [ ] Regular security scans and updates
+
+## 🐳 Docker Image Management
+
+This project includes a custom Docker image that extends the official Apache Kyuubi image with Delta Lake and Iceberg extensions pre-installed.
+
+### Custom Image Features
+
+- **Base**: `apache/kyuubi:1.9.0-spark-3.5`
+- **Delta Lake**: v3.2.1 with Spark runtime and storage modules
+- **Apache Iceberg**: v1.7.1 with Spark runtime and AWS bundle
+- **PostgreSQL Driver**: v42.7.3 for Hive Metastore connectivity
+- **Hadoop AWS**: v3.3.6 for S3/MinIO integration
+
+### Building and Publishing
+
+#### Build Custom Image
+```bash
+# Build with default 'latest' tag
+just docker-build
+
+# Build with custom tag
+just docker-build 1.9.0-delta-iceberg
+```
+
+#### Publish to Registry
+```bash
+# Publish with default 'latest' tag
+just docker-publish
+
+# Publish with custom tag
+just docker-publish 1.9.0-delta-iceberg
+```
+
+#### Complete Release Process
+```bash
+# Build and publish with versioning (creates both versioned and latest tags)
+just docker-release 1.9.0-delta-iceberg
+```
+
+This will:
+1. Build image: `regv2.gsingh.io/core/kyuubi:1.9.0-delta-iceberg`
+2. Tag as latest: `regv2.gsingh.io/core/kyuubi:latest`
+3. Publish both tags to the registry
+
+### Using Custom Image
+
+#### Update Docker Compose
+```bash
+# Use custom image with specific tag
+just docker-use-custom 1.9.0-delta-iceberg
+
+# Use custom image with latest tag
+just docker-use-custom latest
+```
+
+#### Restore Official Image
+```bash
+just docker-use-official
+```
+
+### Docker Commands Reference
+
+```bash
+# Show Docker image information
+just docker-info
+
+# Build image with custom tag
+just docker-build <tag>
+
+# Publish image to registry
+just docker-publish <tag>
+
+# Complete release with versioning
+just docker-release <version>
+
+# Update compose to use custom image
+just docker-use-custom <tag>
+
+# Restore official image
+just docker-use-official
+```
+
+### Image Registry
+
+All custom images are published to: `regv2.gsingh.io/core/kyuubi`
+
+Available tags:
+- `latest` - Most recent build
+- `1.9.0-delta-iceberg` - Versioned releases
+- Custom tags as specified during build
+
+### Benefits of Custom Image
+
+1. **Faster Deployment**: Extensions pre-installed, no download time
+2. **Consistency**: Same extensions across all environments
+3. **Version Control**: Specific versions of Delta and Iceberg
+4. **Registry Management**: Centralized image repository
+5. **Reduced Complexity**: No need to manage JAR files separately
 
 ## 🔧 Advanced Configuration
 

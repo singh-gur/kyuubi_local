@@ -3,25 +3,7 @@
 
 # Default recipe
 default:
-    @echo "Kyuubi with Delta and Iceberg - Local Development Setup"
-    @echo ""
-    @echo "Available commands:"
-    @echo "  just setup          - Initial setup and download dependencies"
-    @echo "  just start          - Start all services"
-    @echo "  just stop           - Stop all services"
-    @echo "  just restart        - Restart all services"
-    @echo "  just logs [service] - Show logs for all or specific service"
-    @echo "  just status         - Show status of all services"
-    @echo "  just shell          - Open shell in Kyuubi container"
-    @echo "  just beeline        - Connect to Kyuubi using Beeline"
-    @echo "  just minio          - Open MinIO console in browser"
-    @echo "  just spark-ui       - Open Spark UI in browser"
-    @echo "  just clean          - Clean up containers and data"
-    @echo "  just clean-data     - Clean only data directories"
-    @echo "  just test-delta     - Test Delta Lake functionality"
-    @echo "  just test-iceberg   - Test Iceberg functionality"
-    @echo "  just test-s3        - Test S3/MinIO functionality"
-    @echo "  just help           - Show this help message"
+    @just --list
 
 # Environment variables
 export MINIO_ACCESS_KEY := env_var_or_default("MINIO_ACCESS_KEY", "minioadmin")
@@ -33,20 +15,12 @@ export HIVE_METASTORE_PASSWORD := env_var_or_default("HIVE_METASTORE_PASSWORD", 
 
 # Initial setup
 setup:
-    @echo "🚀 Setting up Kyuubi development environment..."
-    
-    # Create necessary directories
     mkdir -p config/kyuubi config/spark config/hive scripts jars data/warehouse data/minio data/postgres logs
-    
-    # Download required JARs if not present
     @echo "📦 Downloading required JARs..."
     just _download-jars
-    
-    # Set proper permissions
     chmod +x scripts/*.sh 2>/dev/null || true
     chmod +x config/spark/spark-env.sh
-    
-    @echo "✅ Setup complete! Run 'just start' to begin."
+    @echo "✅ Setup complete!"
 
 # Download required JARs for Delta and Iceberg
 _download-jars:
@@ -153,27 +127,11 @@ beeline:
 
 # Open MinIO console
 minio:
-    #!/usr/bin/env bash
-    echo "🗄️ Opening MinIO console..."
-    if command -v xdg-open >/dev/null 2>&1; then
-        xdg-open http://localhost:9001
-    elif command -v open >/dev/null 2>&1; then
-        open http://localhost:9001
-    else
-        echo "Please open http://localhost:9001 in your browser"
-    fi
+    @echo "MinIO Console: http://localhost:9001"
 
 # Open Spark UI
 spark-ui:
-    #!/usr/bin/env bash
-    echo "📊 Opening Spark UI..."
-    if command -v xdg-open >/dev/null 2>&1; then
-        xdg-open http://localhost:4040
-    elif command -v open >/dev/null 2>&1; then
-        open http://localhost:4040
-    else
-        echo "Please open http://localhost:4040 in your browser"
-    fi
+    @echo "Spark UI: http://localhost:4040"
 
 # Clean up everything
 clean:
@@ -194,19 +152,10 @@ clean-data:
 test-delta:
     @echo "🧪 Testing Delta Lake functionality..."
     docker-compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" --script=<(echo "
-    -- Create Delta table
     CREATE TABLE delta_test (id INT, name STRING, value DOUBLE) USING DELTA LOCATION 's3a://kyuubi-warehouse/delta_test';
-    
-    -- Insert data
     INSERT INTO delta_test VALUES (1, 'Alice', 100.5), (2, 'Bob', 200.3);
-    
-    -- Query data
     SELECT * FROM delta_test;
-    
-    -- Update data
     UPDATE delta_test SET value = value * 1.1 WHERE id = 1;
-    
-    -- Show history
     DESCRIBE HISTORY delta_test;
     ")
 
@@ -214,19 +163,10 @@ test-delta:
 test-iceberg:
     @echo "🧪 Testing Iceberg functionality..."
     docker-compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" --script=<(echo "
-    -- Use Iceberg catalog
     USE s3;
-    
-    -- Create Iceberg table
     CREATE TABLE iceberg_test (id INT, name STRING, value DOUBLE) USING iceberg;
-    
-    -- Insert data
     INSERT INTO iceberg_test VALUES (1, 'Charlie', 300.7), (2, 'Diana', 400.2);
-    
-    -- Query data
     SELECT * FROM iceberg_test;
-    
-    -- Show snapshots
     SELECT * FROM iceberg_test.snapshots;
     ")
 
@@ -234,16 +174,9 @@ test-iceberg:
 test-s3:
     @echo "🧪 Testing S3/MinIO functionality..."
     docker-compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" --script=<(echo "
-    -- Create table in S3
     CREATE TABLE s3_test (id INT, data STRING) LOCATION 's3a://kyuubi-warehouse/s3_test';
-    
-    -- Insert data
     INSERT INTO s3_test VALUES (1, 'test_data_1'), (2, 'test_data_2');
-    
-    -- Query data
     SELECT * FROM s3_test;
-    
-    -- List S3 files (using Spark)
     SHOW TABLES LIKE '*s3*';
     ")
 
@@ -275,11 +208,111 @@ backup-config:
 # Health check
 health:
     @echo "🏥 Checking service health..."
-    @echo "Kyuubi Server:"
-    @curl -s http://localhost:10009/ >/dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
-    @echo "MinIO:"
-    @curl -s http://localhost:9000/minio/health/live >/dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
-    @echo "PostgreSQL:"
-    @docker-compose exec -T postgres pg_isready -U hive >/dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
-    @echo "Hive Metastore:"
-    @docker-compose exec -T hive-metastore netstat -tlnp | grep :9083 >/dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
+    @echo "Kyuubi Server:"; curl -s http://localhost:10009/ >/dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
+    @echo "MinIO:"; curl -s http://localhost:9000/minio/health/live >/dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
+    @echo "PostgreSQL:"; docker-compose exec -T postgres pg_isready -U hive >/dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
+    @echo "Hive Metastore:"; docker-compose exec -T hive-metastore netstat -tlnp | grep :9083 >/dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
+
+# Docker image management
+# Build custom Kyuubi image with Delta and Iceberg extensions
+docker-build tag="latest":
+    @echo "🔨 Building custom Kyuubi image with Delta and Iceberg extensions..."
+    @echo "Building image: regv2.gsingh.io/core/kyuubi:{{tag}}"
+    docker build -t "regv2.gsingh.io/core/kyuubi:{{tag}}" .
+    @echo "✅ Image built successfully: regv2.gsingh.io/core/kyuubi:{{tag}}"
+
+# Publish Docker image to registry
+docker-publish tag="latest":
+    @echo "📤 Publishing Kyuubi image to registry..."
+    @echo "Publishing: regv2.gsingh.io/core/kyuubi:{{tag}}"
+    docker push "regv2.gsingh.io/core/kyuubi:{{tag}}"
+    @echo "✅ Image published successfully: regv2.gsingh.io/core/kyuubi:{{tag}}"
+
+# Build and publish Docker image with version tagging
+docker-release version="":
+    #!/usr/bin/env bash
+    set -e
+    
+    if [ -z "{{version}}" ]; then
+        echo "❌ Error: Version is required"
+        echo "Usage: just docker-release <version>"
+        echo "Example: just docker-release 1.9.0-delta-iceberg"
+        exit 1
+    fi
+    
+    echo "🚀 Releasing Kyuubi image version {{version}}..."
+    
+    # Build with version tag
+    echo "Building image with version tag..."
+    just docker-build "{{version}}"
+    
+    # Also tag as latest
+    echo "Tagging as latest..."
+    docker tag "regv2.gsingh.io/core/kyuubi:{{version}}" "regv2.gsingh.io/core/kyuubi:latest"
+    
+    # Publish both tags
+    echo "Publishing versioned image..."
+    just docker-publish "{{version}}"
+    
+    echo "Publishing latest image..."
+    just docker-publish "latest"
+    
+    echo "✅ Release complete!"
+    echo "📦 Published images:"
+    echo "   - regv2.gsingh.io/core/kyuubi:{{version}}"
+    echo "   - regv2.gsingh.io/core/kyuubi:latest"
+
+# Update docker-compose.yml to use custom image
+docker-use-custom tag="latest":
+    #!/usr/bin/env bash
+    set -e
+    
+    echo "🔄 Updating docker-compose.yml to use custom image..."
+    IMAGE_NAME="regv2.gsingh.io/core/kyuubi:{{tag}}"
+    
+    # Update the image in docker-compose.yml
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        sed -i '' "s|image: apache/kyuubi:1.9.0-spark-3.5|image: ${IMAGE_NAME}|g" docker-compose.yml
+    else
+        # Linux
+        sed -i "s|image: apache/kyuubi:1.9.0-spark-3.5|image: ${IMAGE_NAME}|g" docker-compose.yml
+    fi
+    
+    echo "✅ Updated docker-compose.yml to use ${IMAGE_NAME}"
+    echo "💡 Run 'just restart' to use the new image"
+
+# Restore docker-compose.yml to use official image
+docker-use-official:
+    #!/usr/bin/env bash
+    set -e
+    
+    echo "🔄 Restoring docker-compose.yml to use official image..."
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        sed -i '' "s|image: regv2.gsingh.io/core/kyuubi:.*|image: apache/kyuubi:1.9.0-spark-3.5|g" docker-compose.yml
+    else
+        # Linux
+        sed -i "s|image: regv2.gsingh.io/core/kyuubi:.*|image: apache/kyuubi:1.9.0-spark-3.5|g" docker-compose.yml
+    fi
+    
+    echo "✅ Restored docker-compose.yml to use official image"
+    echo "💡 Run 'just restart' to use the official image"
+
+# Show Docker image information
+docker-info:
+    @echo "📋 Docker Image Information:"
+    @echo "Custom Image: regv2.gsingh.io/core/kyuubi"
+    @echo "Base Image: apache/kyuubi:1.10.2-spark"
+    @echo "Extensions: Delta Lake 3.2.1, Iceberg 1.7.1"
+    @echo ""
+    @echo "📦 Available local images:"
+    @docker images | grep kyuubi || echo "No Kyuubi images found locally"
+    @echo ""
+    @echo "🔧 Available commands:"
+    @echo "  just docker-build [tag]     - Build custom image"
+    @echo "  just docker-publish [tag]   - Publish image to registry"
+    @echo "  just docker-release <ver>  - Build and publish with versioning"
+    @echo "  just docker-use-custom [tag] - Update compose to use custom image"
+    @echo "  just docker-use-official    - Restore official image in compose"
+    @echo "  just docker-info            - Show this information"

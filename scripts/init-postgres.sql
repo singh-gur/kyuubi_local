@@ -5,7 +5,7 @@
 CREATE DATABASE hive_metastore;
 
 -- Create user if it doesn't exist
-CREATE USER hive WITH PASSWORD 'hive';
+CREATE USER hive_user WITH PASSWORD 'hive';
 
 -- Grant privileges
 GRANT ALL PRIVILEGES ON DATABASE hive_metastore TO hive;

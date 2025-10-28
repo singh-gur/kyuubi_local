@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  kyuubi:
+    image: apache/kyuubi:1.9.0-spark-3.5
+    container_name: kyuubi-server
+    ports:
+      - "10009:10009"  # Kyuubi server port
+      - "4040:4040"    # Spark UI
+      - "18080:18080"  # Spark master UI (if applicable)
+    environment:
+      - KYUUBI_HOME=/opt/kyuubi
+      - SPARK_HOME=/opt/spark
+      - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+      - AWS_ACCESS_KEY_ID=${MINIO_ACCESS_KEY:-minioadmin}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+    volumes:
+      - ./config/kyuubi:/opt/kyuubi/conf
+      - ./config/spark:/opt/spark/conf
+      - ./data/warehouse:/opt/warehouse
+      - ./logs:/opt/kyuubi/logs
+      - ./jars:/opt/kyuubi/externals/engines/spark/jars
+    networks:
+      - kyuubi-network
+    depends_on:
+      - minio
+    command: >
+      bash -c "
+        echo 'Starting Kyuubi server...' &&
+        /opt/kyuubi/bin/kyuubi start
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10009/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  minio:
+    image: minio/minio:latest
+    container_name: kyuubi-minio
+    ports:
+      - "9000:9000"  # MinIO API
+      - "9001:9001"  # MinIO Console
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - ./data/minio:/data
+    networks:
+      - kyuubi-network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Optional: PostgreSQL for Hive Metastore
+  postgres:
+    image: postgres:15
+    container_name: kyuubi-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${HIVE_METASTORE_DB:-hive_metastore}
+      - POSTGRES_USER=${HIVE_METASTORE_USER:-hive}
+      - POSTGRES_PASSWORD=${HIVE_METASTORE_PASSWORD:-hive}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - kyuubi-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${HIVE_METASTORE_USER:-hive}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Hive Metastore
+  hive-metastore:
+    image: apache/hive:4.0.0
+    container_name: kyuubi-hive-metastore
+    ports:
+      - "9083:9083"
+    environment:
+      - SERVICE_NAME=metastore
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${HIVE_METASTORE_DB:-hive_metastore}
+      - DB_USER=${HIVE_METASTORE_USER:-hive}
+      - DB_PASSWORD=${HIVE_METASTORE_PASSWORD:-hive}
+      - METASTORE_WAREHOUSE_DIR=s3a://kyuubi-warehouse/
+    volumes:
+      - ./config/hive:/opt/hive/conf
+      - ./jars:/opt/hive/auxlib
+    networks:
+      - kyuubi-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      bash -c "
+        echo 'Starting Hive Metastore...' &&
+        /opt/hive/bin/start-metastore
+      "
+    healthcheck:
+      test: ["CMD", "netstat", "-tlnp", "|", "grep", ":9083"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  kyuubi-network:
+    driver: bridge
+
+volumes:
+  kyuubi-warehouse:
+    driver: local
+  minio-data:
+    driver: local
+  postgres-data:
+    driver: local

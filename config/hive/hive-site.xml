@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<configuration>
+  <!-- Metastore Configuration -->
+  <property>
+    <name>javax.jdo.option.ConnectionURL</name>
+    <value>jdbc:postgresql://postgres:5432/${HIVE_METASTORE_DB:-hive_metastore}</value>
+    <description>JDBC connect string for a JDBC metastore</description>
+  </property>
+
+  <property>
+    <name>javax.jdo.option.ConnectionDriverName</name>
+    <value>org.postgresql.Driver</value>
+    <description>Driver class name for a JDBC metastore</description>
+  </property>
+
+  <property>
+    <name>javax.jdo.option.ConnectionUserName</name>
+    <value>${HIVE_METASTORE_USER:-hive}</value>
+    <description>Username to use against metastore database</description>
+  </property>
+
+  <property>
+    <name>javax.jdo.option.ConnectionPassword</name>
+    <value>${HIVE_METASTORE_PASSWORD:-hive}</value>
+    <description>Password to use against metastore database</description>
+  </property>
+
+  <!-- Warehouse Configuration -->
+  <property>
+    <name>hive.metastore.warehouse.dir</name>
+    <value>s3a://kyuubi-warehouse/</value>
+    <description>Location of default database for the warehouse</description>
+  </property>
+
+  <!-- Metastore Server Configuration -->
+  <property>
+    <name>hive.metastore.uris</name>
+    <value>thrift://hive-metastore:9083</value>
+    <description>Thrift URI for the remote metastore</description>
+  </property>
+
+  <property>
+    <name>hive.metastore.schema.verification</name>
+    <value>false</value>
+    <description>Enforce metastore schema version consistency</description>
+  </property>
+
+  <property>
+    <name>hive.metastore.schema.verification.record.version</name>
+    <value>false</value>
+    <description>Record schema version when verification fails</description>
+  </property>
+
+  <!-- S3 Configuration -->
+  <property>
+    <name>fs.s3a.endpoint</name>
+    <value>http://minio:9000</value>
+    <description>AWS S3 endpoint to connect to</description>
+  </property>
+
+  <property>
+    <name>fs.s3a.path.style.access</name>
+    <value>true</value>
+    <description>Enable S3 path style access</description>
+  </property>
+
+  <property>
+    <name>fs.s3a.access.key</name>
+    <value>${AWS_ACCESS_KEY_ID}</value>
+    <description>AWS access key ID</description>
+  </property>
+
+  <property>
+    <name>fs.s3a.secret.key</name>
+    <value>${AWS_SECRET_ACCESS_KEY}</value>
+    <description>AWS secret access key</description>
+  </property>
+
+  <property>
+    <name>fs.s3a.impl</name>
+    <value>org.apache.hadoop.fs.s3a.S3AFileSystem</value>
+    <description>The implementation class of the S3A Filesystem</description>
+  </property>
+
+  <property>
+    <name>fs.s3a.connection.maximum</name>
+    <value>100</value>
+    <description>Maximum number of concurrent connections to S3</description>
+  </property>
+
+  <property>
+    <name>fs.s3a.fast.upload</name>
+    <value>true</value>
+    <description>Use multipart upload for better performance</description>
+  </property>
+
+  <!-- Performance Configuration -->
+  <property>
+    <name>hive.metastore.client.socket.timeout</name>
+    <value>300</value>
+    <description>MetaStore client socket timeout in seconds</description>
+  </property>
+
+  <property>
+    <name>hive.metastore.client.connect.retry.delay</name>
+    <value>5</value>
+    <description>Number of seconds for the client to wait between consecutive connection attempts</description>
+  </property>
+
+  <property>
+    <name>hive.metastore.client.connect.retries</name>
+    <value>5</value>
+    <description>Number of retry attempts</description>
+  </property>
+
+  <!-- Security Configuration -->
+  <property>
+    <name>hive.metastore.sasl.enabled</name>
+    <value>false</value>
+    <description>If true, the metastore thrift interface will be secured with SASL</description>
+  </property>
+
+  <property>
+    <name>hive.metastore.execute.setugi</name>
+    <value>false</value>
+    <description>Set this property to enable Hive Metastore to impersonate users</description>
+  </property>
+
+  <!-- Transaction Configuration -->
+  <property>
+    <name>hive.support.concurrency</name>
+    <value>true</value>
+    <description>Enable Hive's concurrency support</description>
+  </property>
+
+  <property>
+    <name>hive.txn.manager</name>
+    <value>org.apache.hadoop.hive.ql.lockmgr.DbTxnManager</value>
+    <description>Transaction manager implementation</description>
+  </property>
+
+  <property>
+    <name>hive.compactor.initiator.on</name>
+    <value>true</value>
+    <description>Whether to run the initiator thread</description>
+  </property>
+
+  <property>
+    <name>hive.compactor.worker.threads</name>
+    <value>1</value>
+    <description>Number of worker threads to run</description>
+  </property>
+</configuration>

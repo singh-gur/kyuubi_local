@@ -226,6 +226,53 @@ kyuubi.engine.spark.sql.catalog.my_catalog.type=hadoop
 kyuubi.engine.spark.sql.catalog.my_catalog.warehouse=s3a://my-bucket/warehouse/
 ```
 
+## 🔒 Security
+
+### Environment Configuration
+
+This project uses environment variables for configuration. For security reasons:
+
+1. **`.env` file**: Contains sensitive information (credentials, keys) and is **NOT** tracked in git
+2. **`.env.template`**: Template file with example values that **IS** tracked in git
+
+**Setup your environment:**
+```bash
+# Copy the template to create your local environment file
+cp .env.template .env
+
+# Edit with your actual values
+nano .env
+```
+
+### Git Ignore Configuration
+
+The `.gitignore` file is configured to exclude:
+
+- **Sensitive files**: `.env`, certificates, keys
+- **Data directories**: `data/`, `warehouse/`, logs
+- **Build artifacts**: JAR files, class files, target directories
+- **Runtime files**: PID files, lock files, temporary files
+- **IDE files**: Editor-specific configurations
+- **System files**: OS-generated files
+
+### Best Practices
+
+1. **Never commit credentials**: Always use environment variables for secrets
+2. **Change default passwords**: Update MinIO and database credentials in production
+3. **Use different environments**: Maintain separate `.env` files for dev/staging/prod
+4. **Regular security updates**: Keep Docker images and dependencies updated
+5. **Access control**: Implement authentication in production environments
+
+### Production Security Checklist
+
+- [ ] Change all default passwords and credentials
+- [ ] Enable Kyuubi authentication (KERBEROS/LDAP)
+- [ ] Use HTTPS for all endpoints
+- [ ] Implement network security groups/firewalls
+- [ ] Enable audit logging
+- [ ] Use secrets management (HashiCorp Vault, AWS Secrets Manager)
+- [ ] Regular security scans and updates
+
 ## 🔧 Advanced Configuration
 
 ### Performance Tuning

@@ -13,6 +13,191 @@ Thumbs.db
 *.swp
 *.swo
 *~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Environment and configuration files with secrets
+.env
+.env.local
+.env.*.local
+config/local/
+config/production/
+config/secrets/
 
 # Logs
 *.log
+logs/
+spark-logs/
+kyuubi-logs/
+hive-logs/
+
+# Data directories (should not be versioned)
+data/
+warehouse/
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Runtime and PID files
+*.pid
+*.lock
+run/
+
+# Spark specific
+spark-events/
+spark-warehouse/
+*.parquet.crc
+*.orc.crc
+*.avro.crc
+
+# Hadoop/Big Data specific
+metastore_db/
+derby.log
+hive-exec-log*.txt
+hive-task-log*.txt
+
+# Java/Scala specific
+*.class
+*.jar
+target/
+build/
+out/
+.cache/
+.project
+.classpath
+
+# Python specific (if using PySpark)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Node.js specific (if using web UI components)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker specific
+.dockerignore
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Jupyter notebooks (if used)
+.ipynb_checkpoints/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Security and certificates
+*.pem
+*.key
+*.crt
+*.p12
+.jks/
+.p12/
+
+# Performance profiling
+*.prof
+*.hprof
+
+# IDE specific files
+.vscode/settings.json
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/shelf
+.idea/contentModel.xml
+.idea/dataSources.ids
+.idea/dataSources.local.xml
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+.idea/uiDesigner.xml
+.idea/gradle.xml
+.idea/libraries
+*.iws
+*.iml
+*.ipr
+
+# OS specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Test outputs
+test-output/
+test-results/
+.coverage
+.pytest_cache/
+.nyc_output/
+
+# Build artifacts
+dist/
+build/
+target/
+out/
+bin/
+
+# Dependency directories
+node_modules/
+.pnp/
+.pnp.js
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# next.js build output
+.next
+
+# nuxt.js build output
+.nuxt
+
+# vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/

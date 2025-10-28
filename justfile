@@ -54,11 +54,10 @@ _download-jars:
     set -e
     
     JARS_DIR="jars"
-    DELTA_VERSION="2.4.0"
-    ICEBERG_VERSION="1.5.0"
-    SPARK_VERSION="3.5"
+    DELTA_VERSION="3.2.1"
+    ICEBERG_VERSION="1.7.1"
+    SCALA_VERSION="2.13"
     POSTGRES_VERSION="42.7.3"
-    AWS_SDK_VERSION="2.25.69"
     HADOOP_AWS_VERSION="3.3.6"
     
     # Create jars directory
@@ -67,9 +66,9 @@ _download-jars:
     echo "Downloading Delta Lake JARs..."
     cd "$JARS_DIR"
     
-    # Delta Lake Core
-    if [ ! -f "delta-core_${SPARK_VERSION}-${DELTA_VERSION}.jar" ]; then
-        wget -q "https://repo1.maven.org/maven2/io/delta/delta-core_${SPARK_VERSION}/${DELTA_VERSION}/delta-core_${SPARK_VERSION}-${DELTA_VERSION}.jar"
+    # Delta Lake Spark Runtime
+    if [ ! -f "delta-spark_${SCALA_VERSION}-${DELTA_VERSION}.jar" ]; then
+        wget -q "https://repo1.maven.org/maven2/io/delta/delta-spark_${SCALA_VERSION}/${DELTA_VERSION}/delta-spark_${SCALA_VERSION}-${DELTA_VERSION}.jar"
     fi
     
     # Delta Storage
@@ -79,8 +78,8 @@ _download-jars:
     
     # Iceberg JARs
     echo "Downloading Iceberg JARs..."
-    if [ ! -f "iceberg-spark-runtime-${SPARK_VERSION}_${ICEBERG_VERSION}.jar" ]; then
-        wget -q "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${SPARK_VERSION}_${ICEBERG_VERSION}/iceberg-spark-runtime-${SPARK_VERSION}_${ICEBERG_VERSION}.jar"
+    if [ ! -f "iceberg-spark-runtime-3.5_${SCALA_VERSION}-${ICEBERG_VERSION}.jar" ]; then
+        wget -q "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_${SCALA_VERSION}/${ICEBERG_VERSION}/iceberg-spark-runtime-3.5_${SCALA_VERSION}-${ICEBERG_VERSION}.jar"
     fi
     
     if [ ! -f "iceberg-aws-bundle-${ICEBERG_VERSION}.jar" ]; then
@@ -93,15 +92,10 @@ _download-jars:
         wget -q "https://repo1.maven.org/maven2/org/postgresql/postgresql/${POSTGRES_VERSION}/postgresql-${POSTGRES_VERSION}.jar"
     fi
     
-    # AWS SDK and Hadoop AWS
-    echo "Downloading AWS SDK JARs..."
+    # Hadoop AWS
+    echo "Downloading Hadoop AWS JAR..."
     if [ ! -f "hadoop-aws-${HADOOP_AWS_VERSION}.jar" ]; then
         wget -q "https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/${HADOOP_AWS_VERSION}/hadoop-aws-${HADOOP_AWS_VERSION}.jar"
-    fi
-    
-    # AWS SDK bundles
-    if [ ! -f "aws-java-sdk-bundle-${AWS_SDK_VERSION}.jar" ]; then
-        wget -q "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/${AWS_SDK_VERSION}/aws-java-sdk-bundle-${AWS_SDK_VERSION}.jar"
     fi
     
     cd ..
@@ -159,8 +153,9 @@ beeline:
 
 # Open MinIO console
 minio:
-    @echo "🗄️ Opening MinIO console..."
-    @if command -v xdg-open >/dev/null 2>&1; then
+    #!/usr/bin/env bash
+    echo "🗄️ Opening MinIO console..."
+    if command -v xdg-open >/dev/null 2>&1; then
         xdg-open http://localhost:9001
     elif command -v open >/dev/null 2>&1; then
         open http://localhost:9001
@@ -170,8 +165,9 @@ minio:
 
 # Open Spark UI
 spark-ui:
-    @echo "📊 Opening Spark UI..."
-    @if command -v xdg-open >/dev/null 2>&1; then
+    #!/usr/bin/env bash
+    echo "📊 Opening Spark UI..."
+    if command -v xdg-open >/dev/null 2>&1; then
         xdg-open http://localhost:4040
     elif command -v open >/dev/null 2>&1; then
         open http://localhost:4040
@@ -262,45 +258,12 @@ help:
 # Create sample data
 create-sample-data:
     @echo "📊 Creating sample data..."
-    docker-compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" --script=<(echo "
-    -- Create Delta sample table
-    CREATE TABLE sales_delta (
-        order_id INT,
-        customer_id INT,
-        product_id INT,
-        quantity INT,
-        price DECIMAL(10,2),
-        order_date DATE
-    ) USING DELTA PARTITIONED BY (order_date);
-    
-    -- Insert sample data
-    INSERT INTO sales_delta VALUES
-        (1, 101, 1001, 2, 29.99, DATE('2024-01-15')),
-        (2, 102, 1002, 1, 49.99, DATE('2024-01-15')),
-        (3, 101, 1003, 3, 19.99, DATE('2024-01-16')),
-        (4, 103, 1001, 1, 29.99, DATE('2024-01-16'));
-    
-    -- Create Iceberg sample table
-    USE s3;
-    CREATE TABLE customers_iceberg (
-        customer_id INT,
-        name STRING,
-        email STRING,
-        registration_date DATE
-    ) USING iceberg;
-    
-    -- Insert sample data
-    INSERT INTO customers_iceberg VALUES
-        (101, 'Alice Johnson', 'alice@example.com', DATE('2023-06-01')),
-        (102, 'Bob Smith', 'bob@example.com', DATE('2023-07-15')),
-        (103, 'Charlie Brown', 'charlie@example.com', DATE('2023-08-20'));
-    
-    -- Show created tables
-    USE default;
-    SHOW TABLES;
-    USE s3;
-    SHOW TABLES;
-    ")
+    docker-compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "CREATE TABLE sales_delta (order_id INT, customer_id INT, product_id INT, quantity INT, price DECIMAL(10,2), order_date DATE) USING DELTA PARTITIONED BY (order_date);"
+    docker-compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "INSERT INTO sales_delta VALUES (1, 101, 1001, 2, 29.99, DATE('2024-01-15')), (2, 102, 1002, 1, 49.99, DATE('2024-01-15')), (3, 101, 1003, 3, 19.99, DATE('2024-01-16')), (4, 103, 1001, 1, 29.99, DATE('2024-01-16'));"
+    docker-compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE s3; CREATE TABLE customers_iceberg (customer_id INT, name STRING, email STRING, registration_date DATE) USING iceberg;"
+    docker-compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE s3; INSERT INTO customers_iceberg VALUES (101, 'Alice Johnson', 'alice@example.com', DATE('2023-06-01')), (102, 'Bob Smith', 'bob@example.com', DATE('2023-07-15')), (103, 'Charlie Brown', 'charlie@example.com', DATE('2023-08-20'));"
+    docker-compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE default; SHOW TABLES;"
+    docker-compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE s3; SHOW TABLES;"
     @echo "✅ Sample data created!"
 
 # Backup configurations

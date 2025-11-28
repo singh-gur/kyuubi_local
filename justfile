@@ -1,5 +1,9 @@
 # Kyuubi with Delta and Iceberg - Local Development Setup
 # This Justfile provides convenient commands for managing the development environment
+#
+# NOTE: This setup uses a custom Docker image (regv2.gsingh.io/core/kyuubi:latest)
+# that is built from the Dockerfile with Spark 3.5.2 and all required extensions.
+# The 'start' command automatically builds the image before starting services.
 
 # Default recipe
 default:
@@ -77,6 +81,8 @@ _download-jars:
 
 # Start all services
 start:
+    @echo "🔨 Building custom Kyuubi image..."
+    just docker-build latest
     @echo "🚀 Starting Kyuubi services..."
     docker compose up -d
     @echo "⏳ Waiting for services to be ready..."
@@ -93,11 +99,23 @@ stop:
     docker compose down
     @echo "✅ Services stopped!"
 
+# Start services without rebuilding (faster for restarts)
+start-quick:
+    @echo "🚀 Starting Kyuubi services (without rebuild)..."
+    docker compose up -d
+    @echo "⏳ Waiting for services to be ready..."
+    sleep 30
+    just status
+    @echo "✅ Services started!"
+    @echo "📊 Spark UI: http://localhost:4040"
+    @echo "🗄️  MinIO Console: http://localhost:9001"
+    @echo "🔌 Kyuubi Server: localhost:10009"
+
 # Restart all services
 restart:
     @echo "🔄 Restarting Kyuubi services..."
     just stop
-    just start
+    just start-quick
 
 # Show logs
 logs service="":

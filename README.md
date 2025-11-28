@@ -289,7 +289,7 @@ This project includes a custom Docker image that extends the official Apache Kyu
 
 ### Custom Image Features
 
-- **Base**: `apache/kyuubi:1.9.0-spark-3.5`
+- **Base**: `apache/kyuubi:1.10.2-spark`
 - **Delta Lake**: v3.2.1 with Spark runtime and storage modules
 - **Apache Iceberg**: v1.7.1 with Spark runtime and AWS bundle
 - **PostgreSQL Driver**: v42.7.3 for Hive Metastore connectivity
@@ -303,7 +303,7 @@ This project includes a custom Docker image that extends the official Apache Kyu
 just docker-build
 
 # Build with custom tag
-just docker-build 1.9.0-delta-iceberg
+just docker-build 1.10.2-delta-iceberg
 ```
 
 #### Publish to Registry
@@ -312,17 +312,17 @@ just docker-build 1.9.0-delta-iceberg
 just docker-publish
 
 # Publish with custom tag
-just docker-publish 1.9.0-delta-iceberg
+just docker-publish 1.10.2-delta-iceberg
 ```
 
 #### Complete Release Process
 ```bash
 # Build and publish with versioning (creates both versioned and latest tags)
-just docker-release 1.9.0-delta-iceberg
+just docker-release 1.10.2-delta-iceberg
 ```
 
 This will:
-1. Build image: `regv2.gsingh.io/core/kyuubi:1.9.0-delta-iceberg`
+1. Build image: `regv2.gsingh.io/core/kyuubi:1.10.2-delta-iceberg`
 2. Tag as latest: `regv2.gsingh.io/core/kyuubi:latest`
 3. Publish both tags to the registry
 
@@ -331,7 +331,7 @@ This will:
 #### Update Docker Compose
 ```bash
 # Use custom image with specific tag
-just docker-use-custom 1.9.0-delta-iceberg
+just docker-use-custom 1.10.2-delta-iceberg
 
 # Use custom image with latest tag
 just docker-use-custom latest
@@ -370,7 +370,7 @@ All custom images are published to: `regv2.gsingh.io/core/kyuubi`
 
 Available tags:
 - `latest` - Most recent build
-- `1.9.0-delta-iceberg` - Versioned releases
+- `1.10.2-delta-iceberg` - Versioned releases
 - Custom tags as specified during build
 
 ### Benefits of Custom Image

@@ -20,7 +20,7 @@
   <!-- Metastore Configuration -->
   <property>
     <name>javax.jdo.option.ConnectionURL</name>
-    <value>jdbc:postgresql://postgres:5432/${HIVE_METASTORE_DB:-hive_metastore}</value>
+    <value>jdbc:postgresql://postgres:5432/hive_metastore</value>
     <description>JDBC connect string for a JDBC metastore</description>
   </property>
 
@@ -32,13 +32,13 @@
 
   <property>
     <name>javax.jdo.option.ConnectionUserName</name>
-    <value>${HIVE_METASTORE_USER:-hive}</value>
+    <value>hive</value>
     <description>Username to use against metastore database</description>
   </property>
 
   <property>
     <name>javax.jdo.option.ConnectionPassword</name>
-    <value>${HIVE_METASTORE_PASSWORD:-hive}</value>
+    <value>hive</value>
     <description>Password to use against metastore database</description>
   </property>
 
@@ -83,13 +83,13 @@
 
   <property>
     <name>fs.s3a.access.key</name>
-    <value>${AWS_ACCESS_KEY_ID}</value>
+    <value>minioadmin</value>
     <description>AWS access key ID</description>
   </property>
 
   <property>
     <name>fs.s3a.secret.key</name>
-    <value>${AWS_SECRET_ACCESS_KEY}</value>
+    <value>minioadmin</value>
     <description>AWS secret access key</description>
   </property>
 

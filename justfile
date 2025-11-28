@@ -123,7 +123,7 @@ shell:
 # Connect to Kyuubi using Beeline
 beeline:
     @echo "🔌 Connecting to Kyuubi using Beeline..."
-    docker compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default"
+    docker compose exec kyuubi /opt/kyuubi/bin/beeline -u "jdbc:hive2://localhost:10009/default"
 
 # Open MinIO console
 minio:
@@ -150,35 +150,41 @@ clean-data:
 
 # Test Delta Lake functionality
 test-delta:
-    @echo "🧪 Testing Delta Lake functionality..."
-    docker compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" --script=<(echo "
+    #!/usr/bin/env bash
+    set -e
+    echo "🧪 Testing Delta Lake functionality..."
+    docker compose exec -T kyuubi /opt/kyuubi/bin/beeline -u "jdbc:hive2://localhost:10009/default" <<'EOF'
     CREATE TABLE delta_test (id INT, name STRING, value DOUBLE) USING DELTA LOCATION 's3a://kyuubi-warehouse/delta_test';
     INSERT INTO delta_test VALUES (1, 'Alice', 100.5), (2, 'Bob', 200.3);
     SELECT * FROM delta_test;
     UPDATE delta_test SET value = value * 1.1 WHERE id = 1;
     DESCRIBE HISTORY delta_test;
-    ")
+    EOF
 
 # Test Iceberg functionality
 test-iceberg:
-    @echo "🧪 Testing Iceberg functionality..."
-    docker compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" --script=<(echo "
+    #!/usr/bin/env bash
+    set -e
+    echo "🧪 Testing Iceberg functionality..."
+    docker compose exec -T kyuubi /opt/kyuubi/bin/beeline -u "jdbc:hive2://localhost:10009/default" <<'EOF'
     USE s3;
     CREATE TABLE iceberg_test (id INT, name STRING, value DOUBLE) USING iceberg;
     INSERT INTO iceberg_test VALUES (1, 'Charlie', 300.7), (2, 'Diana', 400.2);
     SELECT * FROM iceberg_test;
     SELECT * FROM iceberg_test.snapshots;
-    ")
+    EOF
 
 # Test S3/MinIO functionality
 test-s3:
-    @echo "🧪 Testing S3/MinIO functionality..."
-    docker compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" --script=<(echo "
+    #!/usr/bin/env bash
+    set -e
+    echo "🧪 Testing S3/MinIO functionality..."
+    docker compose exec -T kyuubi /opt/kyuubi/bin/beeline -u "jdbc:hive2://localhost:10009/default" <<'EOF'
     CREATE TABLE s3_test (id INT, data STRING) LOCATION 's3a://kyuubi-warehouse/s3_test';
     INSERT INTO s3_test VALUES (1, 'test_data_1'), (2, 'test_data_2');
     SELECT * FROM s3_test;
     SHOW TABLES LIKE '*s3*';
-    ")
+    EOF
 
 # Run all tests
 test-all: test-delta test-iceberg test-s3
@@ -191,12 +197,12 @@ help:
 # Create sample data
 create-sample-data:
     @echo "📊 Creating sample data..."
-    docker compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "CREATE TABLE sales_delta (order_id INT, customer_id INT, product_id INT, quantity INT, price DECIMAL(10,2), order_date DATE) USING DELTA PARTITIONED BY (order_date);"
-    docker compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "INSERT INTO sales_delta VALUES (1, 101, 1001, 2, 29.99, DATE('2024-01-15')), (2, 102, 1002, 1, 49.99, DATE('2024-01-15')), (3, 101, 1003, 3, 19.99, DATE('2024-01-16')), (4, 103, 1001, 1, 29.99, DATE('2024-01-16'));"
-    docker compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE s3; CREATE TABLE customers_iceberg (customer_id INT, name STRING, email STRING, registration_date DATE) USING iceberg;"
-    docker compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE s3; INSERT INTO customers_iceberg VALUES (101, 'Alice Johnson', 'alice@example.com', DATE('2023-06-01')), (102, 'Bob Smith', 'bob@example.com', DATE('2023-07-15')), (103, 'Charlie Brown', 'charlie@example.com', DATE('2023-08-20'));"
-    docker compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE default; SHOW TABLES;"
-    docker compose exec kyuubi /opt/spark/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE s3; SHOW TABLES;"
+    docker compose exec kyuubi /opt/kyuubi/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "CREATE TABLE sales_delta (order_id INT, customer_id INT, product_id INT, quantity INT, price DECIMAL(10,2), order_date DATE) USING DELTA PARTITIONED BY (order_date);"
+    docker compose exec kyuubi /opt/kyuubi/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "INSERT INTO sales_delta VALUES (1, 101, 1001, 2, 29.99, DATE('2024-01-15')), (2, 102, 1002, 1, 49.99, DATE('2024-01-15')), (3, 101, 1003, 3, 19.99, DATE('2024-01-16')), (4, 103, 1001, 1, 29.99, DATE('2024-01-16'));"
+    docker compose exec kyuubi /opt/kyuubi/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE s3; CREATE TABLE customers_iceberg (customer_id INT, name STRING, email STRING, registration_date DATE) USING iceberg;"
+    docker compose exec kyuubi /opt/kyuubi/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE s3; INSERT INTO customers_iceberg VALUES (101, 'Alice Johnson', 'alice@example.com', DATE('2023-06-01')), (102, 'Bob Smith', 'bob@example.com', DATE('2023-07-15')), (103, 'Charlie Brown', 'charlie@example.com', DATE('2023-08-20'));"
+    docker compose exec kyuubi /opt/kyuubi/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE default; SHOW TABLES;"
+    docker compose exec kyuubi /opt/kyuubi/bin/beeline -u "jdbc:hive2://localhost:10009/default" -e "USE s3; SHOW TABLES;"
     @echo "✅ Sample data created!"
 
 # Backup configurations
@@ -236,7 +242,7 @@ docker-release version="":
     if [ -z "{{version}}" ]; then
         echo "❌ Error: Version is required"
         echo "Usage: just docker-release <version>"
-        echo "Example: just docker-release 1.9.0-delta-iceberg"
+        echo "Example: just docker-release 1.10.2-delta-iceberg"
         exit 1
     fi
     
@@ -273,10 +279,10 @@ docker-use-custom tag="latest":
     # Update the image in docker-compose.yml
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
-        sed -i '' "s|image: apache/kyuubi:1.9.0-spark-3.5|image: ${IMAGE_NAME}|g" docker-compose.yml
+        sed -i '' "s|image: apache/kyuubi:1.10.2-spark|image: ${IMAGE_NAME}|g" docker-compose.yml
     else
         # Linux
-        sed -i "s|image: apache/kyuubi:1.9.0-spark-3.5|image: ${IMAGE_NAME}|g" docker-compose.yml
+        sed -i "s|image: apache/kyuubi:1.10.2-spark|image: ${IMAGE_NAME}|g" docker-compose.yml
     fi
     
     echo "✅ Updated docker-compose.yml to use ${IMAGE_NAME}"
@@ -290,10 +296,10 @@ docker-use-official:
     echo "🔄 Restoring docker-compose.yml to use official image..."
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
-        sed -i '' "s|image: regv2.gsingh.io/core/kyuubi:.*|image: apache/kyuubi:1.9.0-spark-3.5|g" docker-compose.yml
+        sed -i '' "s|image: regv2.gsingh.io/core/kyuubi:.*|image: apache/kyuubi:1.10.2-spark|g" docker-compose.yml
     else
         # Linux
-        sed -i "s|image: regv2.gsingh.io/core/kyuubi:.*|image: apache/kyuubi:1.9.0-spark-3.5|g" docker-compose.yml
+        sed -i "s|image: regv2.gsingh.io/core/kyuubi:.*|image: apache/kyuubi:1.10.2-spark|g" docker-compose.yml
     fi
     
     echo "✅ Restored docker-compose.yml to use official image"

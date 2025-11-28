@@ -1,41 +1,46 @@
-version: '3.8'
-
 services:
   kyuubi:
     image: apache/kyuubi:1.10.2-spark
     container_name: kyuubi-server
+    user: root
     ports:
       - "10009:10009"  # Kyuubi server port
       - "4040:4040"    # Spark UI
       - "18080:18080"  # Spark master UI (if applicable)
     environment:
       - KYUUBI_HOME=/opt/kyuubi
-      - SPARK_HOME=/opt/spark
-      - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+      - SPARK_HOME=/opt/kyuubi/externals/spark-3.5.2-bin-hadoop3
+      - JAVA_HOME=/opt/java/openjdk
       - AWS_ACCESS_KEY_ID=${MINIO_ACCESS_KEY:-minioadmin}
       - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_KEY:-minioadmin}
       - AWS_REGION=${AWS_REGION:-us-east-1}
     volumes:
       - ./config/kyuubi:/opt/kyuubi/conf
-      - ./config/spark:/opt/spark/conf
+      - ./config/spark:/opt/kyuubi/externals/spark-3.5.2-bin-hadoop3/conf
       - ./data/warehouse:/opt/warehouse
       - ./logs:/opt/kyuubi/logs
-      - ./jars:/opt/kyuubi/externals/engines/spark/jars
+      - ./jars:/opt/extra-jars
     networks:
       - kyuubi-network
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      hive-metastore:
+        condition: service_healthy
     command: >
       bash -c "
+        chmod -R 777 /opt/kyuubi/logs &&
         echo 'Starting Kyuubi server...' &&
-        /opt/kyuubi/bin/kyuubi start
+        /opt/kyuubi/bin/kyuubi run
       "
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:10009/"]
+      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/10009' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 90s
 
   minio:
     image: minio/minio:latest
@@ -85,13 +90,12 @@ services:
     ports:
       - "9083:9083"
     environment:
-      - SERVICE_NAME=metastore
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${HIVE_METASTORE_DB:-hive_metastore}
-      - DB_USER=${HIVE_METASTORE_USER:-hive}
-      - DB_PASSWORD=${HIVE_METASTORE_PASSWORD:-hive}
-      - METASTORE_WAREHOUSE_DIR=s3a://kyuubi-warehouse/
+      SERVICE_NAME: metastore
+      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/hive_metastore -Djavax.jdo.option.ConnectionUserName=hive -Djavax.jdo.option.ConnectionPassword=hive"
+      DB_DRIVER: postgres
+      AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
     volumes:
       - ./config/hive:/opt/hive/conf
       - ./jars:/opt/hive/auxlib
@@ -100,16 +104,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: >
-      bash -c "
-        echo 'Starting Hive Metastore...' &&
-        /opt/hive/bin/start-metastore
-      "
+      minio:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "netstat", "-tlnp", "|", "grep", ":9083"]
+      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/9083' || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
+      start_period: 120s
 
 networks:
   kyuubi-network:

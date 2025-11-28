@@ -1,16 +1,16 @@
 # Custom Kyuubi image with Delta Lake and Iceberg extensions
 # Based on official Apache Kyuubi image
-FROM apache/kyuubi:1.10.2-spark
+FROM apache/kyuubi:1.10.0-spark
 
 # Set environment variables
 ENV DELTA_VERSION="3.2.1" \
     ICEBERG_VERSION="1.7.1" \
     SCALA_VERSION="2.13" \
-    POSTGRES_VERSION="42.7.3" \
-    HADOOP_AWS_VERSION="3.3.6"
+    POSTGRES_VERSION="42.7.4" \
+    HADOOP_AWS_VERSION="3.4.1"
 
 # Use the existing SPARK_HOME for JARs
-ENV SPARK_JARS_DIR="/opt/kyuubi/externals/spark-3.5.2-bin-hadoop3/jars"
+ENV SPARK_JARS_DIR="/opt/kyuubi/externals/spark-3.5.3-bin-hadoop3/jars"
 
 # Switch to root to install dependencies
 USER root
@@ -45,11 +45,11 @@ RUN echo "Verifying installed extensions..." && \
 # Add labels for metadata
 LABEL maintainer="gsingh" \
       description="Apache Kyuubi with Delta Lake and Iceberg extensions" \
-      version="1.10.2" \
-      kyuubi.version="1.10.2" \
+      version="1.10.0" \
+      kyuubi.version="1.10.0" \
       delta.version="${DELTA_VERSION}" \
       iceberg.version="${ICEBERG_VERSION}" \
-      spark.version="3.5"
+      spark.version="3.5.3"
 
 # Set working directory
 WORKDIR /opt/kyuubi

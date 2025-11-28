@@ -1,6 +1,6 @@
 services:
   kyuubi:
-    image: apache/kyuubi:1.10.0-spark
+    image: regv2.gsingh.io/core/kyuubi:latest
     container_name: kyuubi-server
     user: root
     ports:
@@ -9,14 +9,14 @@ services:
       - "18080:18080"  # Spark master UI (if applicable)
     environment:
       - KYUUBI_HOME=/opt/kyuubi
-      - SPARK_HOME=/opt/kyuubi/externals/spark-3.5.3-bin-hadoop3
+      - SPARK_HOME=/opt/kyuubi/externals/spark-3.5.2-bin-hadoop3
       - JAVA_HOME=/opt/java/openjdk
       - AWS_ACCESS_KEY_ID=${MINIO_ACCESS_KEY:-minioadmin}
       - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_KEY:-minioadmin}
       - AWS_REGION=${AWS_REGION:-us-east-1}
     volumes:
       - ./config/kyuubi:/opt/kyuubi/conf
-      - ./config/spark:/opt/kyuubi/externals/spark-3.5.3-bin-hadoop3/conf
+      - ./config/spark:/opt/kyuubi/externals/spark-3.5.2-bin-hadoop3/conf
       - ./data/warehouse:/opt/warehouse
       - ./logs:/opt/kyuubi/logs
       - ./jars:/opt/extra-jars

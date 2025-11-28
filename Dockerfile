@@ -10,7 +10,7 @@ ENV DELTA_VERSION="3.2.1" \
     HADOOP_AWS_VERSION="3.4.1"
 
 # Use the existing SPARK_HOME for JARs
-ENV SPARK_JARS_DIR="/opt/kyuubi/externals/spark-3.5.3-bin-hadoop3/jars"
+ENV SPARK_JARS_DIR="/opt/kyuubi/externals/spark-3.5.2-bin-hadoop3/jars"
 
 # Switch to root to install dependencies
 USER root
@@ -49,7 +49,7 @@ LABEL maintainer="gsingh" \
       kyuubi.version="1.10.0" \
       delta.version="${DELTA_VERSION}" \
       iceberg.version="${ICEBERG_VERSION}" \
-      spark.version="3.5.3"
+      spark.version="3.5.2"
 
 # Set working directory
 WORKDIR /opt/kyuubi
